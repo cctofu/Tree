@@ -1,11 +1,5 @@
-//
-//  TreeApp.swift
-//  Tree
-//
-//  Created by Calvin Chang on 6/28/26.
-//
-
 import SwiftUI
+import SwiftData
 
 @main
 struct TreeApp: App {
@@ -13,5 +7,6 @@ struct TreeApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [WorkoutSession.self, ExerciseLog.self])
     }
 }
