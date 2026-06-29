@@ -29,6 +29,20 @@ class WorkoutSession {
     }
 }
 
+// One protein entry per logging action.
+@Model
+class ProteinEntry {
+    var grams: Double
+    var note: String
+    var timestamp: Date
+
+    init(grams: Double, note: String = "", timestamp: Date = Date()) {
+        self.grams = grams
+        self.note = note
+        self.timestamp = timestamp
+    }
+}
+
 // One log entry per exercise per session.
 @Model
 class ExerciseLog {

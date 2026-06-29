@@ -7,6 +7,6 @@ struct TreeApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [WorkoutSession.self, ExerciseLog.self])
+        .modelContainer(for: [WorkoutSession.self, ExerciseLog.self, ProteinEntry.self])
     }
 }

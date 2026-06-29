@@ -31,6 +31,8 @@ struct TodayView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
             #endif
+            .background(Color.appBackground)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
         }
     }
 }

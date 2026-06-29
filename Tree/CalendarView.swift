@@ -3,7 +3,9 @@ import SwiftData
 
 struct CalendarView: View {
     @Query private var allSessions: [WorkoutSession]
+    @Query private var allProteinEntries: [ProteinEntry]
     @State private var displayedMonth: Date = Calendar.current.startOfMonth(for: Date())
+    @State private var selectedDay: Date?
 
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -34,6 +36,14 @@ struct CalendarView: View {
             map[key] = session
         }
         return map
+    }
+
+    private let proteinGoal: Double = 150
+
+    private func proteinTotal(for date: Date) -> Double {
+        allProteinEntries
+            .filter { calendar.isDate($0.timestamp, inSameDayAs: date) }
+            .reduce(0) { $0 + $1.grams }
     }
 
     private var monthTitle: String {
@@ -131,6 +141,9 @@ struct CalendarView: View {
                                 date: day,
                                 session: day.flatMap { sessionsByDay[calendar.startOfDay(for: $0)] }
                             )
+                            .onTapGesture {
+                                if let day { selectedDay = day }
+                            }
                         }
                     }
                     .padding(.horizontal, 8)
@@ -142,6 +155,15 @@ struct CalendarView: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
             #endif
+            .background(Color.appBackground)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .sheet(item: $selectedDay) { day in
+                DaySummarySheet(
+                    date: day,
+                    workoutCompleted: sessionsByDay[calendar.startOfDay(for: day)]?.isFullyComplete == true,
+                    proteinCompleted: proteinTotal(for: day) >= proteinGoal
+                )
+            }
         }
     }
 }
@@ -213,6 +235,65 @@ struct DayCellView: View {
         }
         .frame(height: 50)
     }
+}
+
+// ─── Day summary sheet ───────────────────────────────────────────────────────
+
+struct DaySummarySheet: View {
+    let date: Date
+    let workoutCompleted: Bool
+    let proteinCompleted: Bool
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var title: String {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMM d"
+        return f.string(from: date)
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text(title)
+                    .font(.headline)
+                    .padding(.top, 16)
+
+                VStack(spacing: 14) {
+                    summaryRow(label: "Workout", completed: workoutCompleted)
+                    summaryRow(label: "Protein Goal", completed: proteinCompleted)
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.fraction(0.25)])
+    }
+
+    private func summaryRow(label: String, completed: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: completed ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(completed ? .green : .secondary)
+                .font(.title3)
+            Text(label)
+                .font(.body)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.primary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+extension Date: @retroactive Identifiable {
+    public var id: TimeInterval { timeIntervalSinceReferenceDate }
 }
 
 // ─── Calendar helper ──────────────────────────────────────────────────────────
